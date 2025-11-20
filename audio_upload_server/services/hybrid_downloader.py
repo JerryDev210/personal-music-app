@@ -3,6 +3,7 @@ Hybrid downloader: Downloads audio from URL and embeds Spotify metadata.
 """
 import os
 import requests
+import cloudscraper
 import re
 from pathlib import Path
 from typing import Dict, Any
@@ -168,10 +169,21 @@ def download_and_embed_metadata(download_url: str, spotify_metadata: Dict[str, A
     Returns:
         Dictionary with audio_bytes, filename, and combined metadata
     """
+    temp_file = None
     try:
-        # Step 1: Download audio file
+        # Step 1: Download audio file with Cloudflare bypass
         print(f"Downloading audio from: {download_url}")
-        response = requests.get(download_url, stream=True, timeout=120)
+        
+        # Create a cloudscraper session to bypass Cloudflare protection
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'mobile': False
+            }
+        )
+        
+        response = scraper.get(download_url, stream=True, timeout=120)
         response.raise_for_status()
         
         audio_bytes = response.content
@@ -218,7 +230,7 @@ def download_and_embed_metadata(download_url: str, spotify_metadata: Dict[str, A
         
     except Exception as e:
         # Clean up on error
-        if temp_file.exists():
+        if temp_file and temp_file.exists():
             temp_file.unlink()
         raise Exception(f"Failed to download and embed metadata: {str(e)}")
 

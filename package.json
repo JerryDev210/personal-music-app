@@ -14,5 +14,8 @@
     "react": "19.1.0",
     "react-native": "0.81.5"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^4.49.0"
+  }
 }

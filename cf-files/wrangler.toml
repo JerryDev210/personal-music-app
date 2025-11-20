@@ -1,0 +1,25 @@
+name = "music-player-api"
+main = "src/index.js"
+compatibility_date = "2025-11-20"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "personal-music-db"
+database_id = "23ef13ec-dbcd-43c9-8c81-85e7964d16b0"
+
+# Environment variables (non-sensitive)
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set with: wrangler secret put SECRET_NAME)
+# ONEDRIVE_CLIENT_ID
+# ONEDRIVE_CLIENT_SECRET
+# ONEDRIVE_REFRESH_TOKEN
+# JWT_SECRET (for API authentication if you add it later)
+
+# Development settings
+#[env.dev]
+#vars = { ENVIRONMENT = "development" }
+
+# CORS settings will be in code

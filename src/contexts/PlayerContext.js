@@ -184,6 +184,20 @@ export const PlayerProvider = ({ children }) => {
       // Replace the audio source in the existing player
       player.replace(uri);
       
+      // Set lock screen / notification controls (if available)
+      try {
+        if (player.setActiveForLockScreen) {
+          player.setActiveForLockScreen(true, {
+            title: track.title,
+            artist: track.artist || 'Unknown Artist',
+            album: track.album || 'Unknown Album',
+            artworkUrl: track.artwork_url,
+          });
+        }
+      } catch (lockScreenError) {
+        console.log('Lock screen controls not available:', lockScreenError.message);
+      }
+      
       setCurrentTrack(track);
       setPosition(0);
       

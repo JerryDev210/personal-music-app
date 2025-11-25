@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useAudioPlayer } from 'expo-audio';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { getTrackUri } from '../services/streaming';
 import { incrementPlayCount } from '../services/tracks';
 import { storeData, getData } from '../services/cache';
@@ -59,6 +59,14 @@ export const PlayerProvider = ({ children }) => {
 
   // Initialize audio player (expo-audio handles background playback automatically)
   useEffect(() => {
+    const initAudioMode = async () => {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
+      });
+    };
+
+    initAudioMode();
     loadSavedState();
 
     return () => {

@@ -34,8 +34,21 @@ export const handlePlaylists = {
         return errorResponse('Missing required field: name', 400);
       }
 
+      if (!body.track_ids || !Array.isArray(body.track_ids) || body.track_ids.length === 0) {
+        return errorResponse('At least one track is required', 400);
+      }
+
       const playlistId = crypto.randomUUID();
 
+      // Get artwork from first track
+      const firstTrack = await env.DB.prepare(`
+        SELECT artwork_url FROM tracks 
+        WHERE id = ? AND is_deleted = 0
+      `).bind(body.track_ids[0]).first();
+
+      const artworkUrl = firstTrack?.artwork_url || null;
+
+      // Create playlist
       await env.DB.prepare(`
         INSERT INTO playlists (id, name, description, artwork_url)
         VALUES (?, ?, ?, ?)
@@ -43,12 +56,31 @@ export const handlePlaylists = {
         playlistId,
         body.name,
         body.description || null,
-        body.artwork_url || null
+        artworkUrl
       ).run();
+
+      // Add tracks to playlist
+      for (let i = 0; i < body.track_ids.length; i++) {
+        const trackId = body.track_ids[i];
+        const position = i + 1;
+
+        await env.DB.prepare(`
+          INSERT INTO playlist_tracks (playlist_id, track_id, position)
+          VALUES (?, ?, ?)
+        `).bind(playlistId, trackId, position).run();
+      }
+
+      // Get complete playlist info
+      const playlist = await env.DB.prepare(`
+        SELECT * FROM playlists WHERE id = ?
+      `).bind(playlistId).first();
 
       return successResponse({
         message: 'Playlist created successfully',
-        playlist_id: playlistId,
+        playlist: {
+          ...playlist,
+          track_count: body.track_ids.length,
+        },
       }, 201);
 
     } catch (error) {

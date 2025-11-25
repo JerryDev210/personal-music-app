@@ -28,7 +28,10 @@ export default {
         const trackId = path.split('/').pop();
         return handleLibrary.getTrack(trackId, env);
       }
-
+      if (path.match(/^\/api\/tracks\/[^/]+\/play$/) && method === 'POST') {
+        const trackId = path.split('/')[3];
+        return handleLibrary.incrementPlayCount(trackId, env);
+      }
       if (path === '/api/albums' && method === 'GET') {
         return handleLibrary.getAllAlbums(request, env);
       }

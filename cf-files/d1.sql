@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS tracks (
   artwork_url TEXT,
   added_at INTEGER DEFAULT (unixepoch()),
   updated_at INTEGER,
-  play_count INTEGER DEFAULT 0
+  play_count INTEGER DEFAULT 0,
+  is_deleted INTEGER DEFAULT 0 check (is_deleted IN (0,1))
 );
 
 -- Albums (aggregated from tracks)

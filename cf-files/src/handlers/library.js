@@ -246,4 +246,23 @@ export const handleLibrary = {
       return errorResponse(error.message || 'Failed to get stats', 500);
     }
   },
+
+  /**
+   * POST /api/tracks/:id/play - Increment play count
+   */
+  async incrementPlayCount(trackId, env) {
+    try {
+      await env.DB.prepare(`
+        UPDATE tracks
+        SET play_count = play_count + 1
+        WHERE id = ? AND is_deleted = 0
+      `).bind(trackId).run();
+
+      return successResponse({ message: 'Play count updated' });
+
+    } catch (error) {
+      console.error('Error updating play count:', error);
+      return errorResponse(error.message || 'Failed to update play count', 500);
+    }
+  },
 };

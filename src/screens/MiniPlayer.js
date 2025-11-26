@@ -11,6 +11,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { usePlayer } from '../hooks';
 import { formatDuration } from '../utils/formatters';
+import IconStart from '../../assets/icons/start.png';
+import IconPlay from '../../assets/icons/play.png';
+import IconPause from '../../assets/icons/pause.png';
+import IconEnd from '../../assets/icons/end.png';
 
 /**
  * Mini Player Component
@@ -63,23 +67,17 @@ export default function MiniPlayer() {
     <View style={[styles.container, { 
       bottom: (Platform.OS === 'ios' ? 80 : 60) + insets.bottom
     }]}>
-      {/* Progress Bar
-      <View style={styles.progressContainer}>
-        <Slider
-          style={styles.progressBar}
-          value={position}
-          minimumValue={0}
-          maximumValue={duration || 1}
-          onSlidingComplete={seek}
-          minimumTrackTintColor="#007AFF"
-          maximumTrackTintColor="#ddd"
-          thumbTintColor="#007AFF"
-        />
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{formatDuration(position)}</Text>
-          <Text style={styles.timeText}>{formatDuration(duration)}</Text>
-        </View>
-      </View> */}
+      {/* Progress Bar */}
+      <Slider
+        style={styles.progressBar}
+        value={position}
+        minimumValue={0}
+        maximumValue={duration || 1}
+        onSlidingComplete={seek}
+        minimumTrackTintColor="#007AFF"
+        maximumTrackTintColor="#ddd"
+        thumbTintColor="#007AFF"
+      />
 
       {/* Track Info + Controls */}
       <View style={styles.trackInfo}>
@@ -109,23 +107,24 @@ export default function MiniPlayer() {
             style={styles.controlButton}
             onPress={previous}
           >
-            <Text style={styles.controlIcon}>⏮️</Text>
+            <Image source={IconStart} style={styles.controlImage} />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.controlButton}
             onPress={handlePlayPause}
           >
-            <Text style={styles.controlIcon}>
-              {isPlaying ? '⏸️' : '▶️'}
-            </Text>
+            <Image 
+              source={isPlaying ? IconPause : IconPlay} 
+              style={styles.controlImage} 
+            />
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.controlButton}
             onPress={next}
           >
-            <Text style={styles.controlIcon}>⏭️</Text>
+            <Image source={IconEnd} style={styles.controlImage} />
           </TouchableOpacity>
         </View>
       </View>
@@ -148,22 +147,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 10,
   },
-  progressContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 5,
-  },
   progressBar: {
     width: '100%',
-    height: 20,
-  },
-  timeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: -5,
-  },
-  timeText: {
-    fontSize: 12,
-    color: '#b3b3b3',
+    height: 0,
+    marginTop: 0,
   },
   trackInfo: {
     flexDirection: 'row',
@@ -206,8 +193,9 @@ const styles = StyleSheet.create({
     padding: 3,
     marginHorizontal: 4,
   },
-  controlIcon: {
-    fontSize: 20,
-    color: '#fff',
+  controlImage: {
+    width: 24,
+    height: 24,
+    // tintColor: '#fff',
   },
 });

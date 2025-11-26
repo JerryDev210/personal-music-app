@@ -158,15 +158,18 @@ export const PlayerProvider = ({ children }) => {
    * Handle track end - play next track
    */
   const handleTrackEnd = async () => {
-    const nextIdx = getNextIndex(queueIndex, queue.length, repeatMode);
-    if (nextIdx !== null && nextIdx !== queueIndex) {
-      await playTrackAtIndex(nextIdx);
-    } else if (repeatMode === REPEAT_MODE.ONE) {
+    stopProgressTracking();
+    
+    if (repeatMode === REPEAT_MODE.ONE) {
       await seek(0);
       await resume();
     } else {
-      setIsPlaying(false);
-      stopProgressTracking();
+      const nextIdx = getNextIndex(queueIndex, queue.length, repeatMode);
+      if (nextIdx !== null && nextIdx !== queueIndex) {
+        await playTrackAtIndex(nextIdx);
+      } else {
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -302,8 +305,18 @@ export const PlayerProvider = ({ children }) => {
   const seek = async (seconds) => {
     if (player) {
       try {
+        // Only seek if we have a track loaded
+        if (!currentTrack) return;
+        
         player.seekTo(seconds);
         setPosition(seconds);
+        
+        // Seeking auto-resumes playback in expo-audio
+        // Update state accordingly
+        if (!isPlaying) {
+          setIsPlaying(true);
+          startProgressTracking();
+        }
       } catch (error) {
         console.error('Error seeking:', error);
       }

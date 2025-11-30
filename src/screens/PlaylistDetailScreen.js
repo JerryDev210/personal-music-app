@@ -284,7 +284,7 @@ export default function PlaylistDetailScreen({ route, navigation }) {
 
         {/* Track List */}
         <View style={styles.trackListSection}>
-          <Text style={styles.trackListHeader}>Songs</Text>
+          {/* <Text style={styles.trackListHeader}>Songs</Text> */}
           
           {tracks.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   durationSection: {
     flexDirection: 'row',

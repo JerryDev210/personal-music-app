@@ -1,15 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Text, Platform, View } from 'react-native';
 import { LibraryProvider, PlayerProvider, UserProvider, DownloadProvider } from './src/contexts';
+import { cleanupExpiredCache, evictLRUCache } from './src/services/cache';
+import { CACHE_CONFIG } from './src/config/constants';
 import HomeScreen from './src/screens/HomeScreen';
 import PlaylistsScreen from './src/screens/PlaylistsScreen';
+import PlaylistDetailScreen from './src/screens/PlaylistDetailScreen';
 import MiniPlayer from './src/screens/MiniPlayer';
 
 const Tab = createBottomTabNavigator();
+const PlaylistStack = createStackNavigator();
+
+// Playlist Stack Navigator
+function PlaylistStackScreen() {
+  return (
+    <PlaylistStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#121212',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <PlaylistStack.Screen 
+        name="PlaylistsList" 
+        component={PlaylistsScreen} 
+        options={{ title: 'Playlists' }}
+      />
+      <PlaylistStack.Screen 
+        name="PlaylistDetail" 
+        component={PlaylistDetailScreen}
+        options={({ route }) => ({ title: route.params?.playlist?.name || 'Playlist' })}
+      />
+    </PlaylistStack.Navigator>
+  );
+}
 
 function AppNavigator() {
   const insets = useSafeAreaInsets();
@@ -51,9 +84,10 @@ function AppNavigator() {
                 />
                 <Tab.Screen
                   name="Playlists"
-                  component={PlaylistsScreen}
+                  component={PlaylistStackScreen}
                   options={{
                     tabBarIcon: ({ color }) => <PlaylistIcon color={color} />,
+                    headerShown: false
                   }}
                 />
         </Tab.Navigator>
@@ -64,6 +98,27 @@ function AppNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Initialize cache cleanup on app start (with slight delay to not block startup)
+    const initializeCache = async () => {
+      try {
+        // Clean up expired cache entries
+        await cleanupExpiredCache();
+        
+        // Enforce max cache size using LRU eviction
+        const maxSizeBytes = CACHE_CONFIG.MAX_CACHE_SIZE_MB * 1024 * 1024;
+        await evictLRUCache(maxSizeBytes, CACHE_CONFIG.PROTECTED_KEYS);
+      } catch (error) {
+        console.error('Error initializing cache cleanup:', error);
+      }
+    };
+
+    // Run after 1 second to avoid blocking app startup
+    const timer = setTimeout(initializeCache, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <UserProvider>

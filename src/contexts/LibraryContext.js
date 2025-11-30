@@ -6,8 +6,14 @@ import {
   searchLibrary,
 } from '../services/tracks';
 import { fetchPlaylists } from '../services/playlists';
-import { storeCachedData, getCachedData } from '../services/cache';
-import { STORAGE_KEYS, CACHE_TTL } from '../config/constants';
+import { 
+  storeCachedData, 
+  getCachedData, 
+  getCacheStats,
+  clearNonProtectedCache,
+  removeData,
+} from '../services/cache';
+import { STORAGE_KEYS, CACHE_TTL, CACHE_CONFIG } from '../config/constants';
 
 /**
  * @typedef {import('../types/models').LibraryState} LibraryState
@@ -169,11 +175,71 @@ export const LibraryProvider = ({ children }) => {
     try {
       const playlistsData = await fetchPlaylists();
       setPlaylists(playlistsData.playlists);
+      
+      // Update library cache with new playlists
+      const cachedData = await getCachedData(STORAGE_KEYS.LIBRARY_CACHE, CACHE_TTL.LIBRARY);
+      if (cachedData) {
+        await storeCachedData(STORAGE_KEYS.LIBRARY_CACHE, {
+          ...cachedData,
+          playlists: playlistsData.playlists,
+          timestamp: Date.now(),
+        });
+      }
+      
+      // Clear individual playlist track caches as they may be outdated
+      await clearPlaylistTrackCaches();
     } catch (err) {
       console.error('Error refreshing playlists:', err);
       setError(err);
     }
   }, []);
+
+  /**
+   * Clear all playlist track caches
+   */
+  const clearPlaylistTrackCaches = async () => {
+    try {
+      const inventory = await getCacheStats();
+      const playlistKeys = Object.keys(inventory).filter(key => 
+        key.startsWith(STORAGE_KEYS.PLAYLIST_TRACKS_PREFIX)
+      );
+      
+      for (const key of playlistKeys) {
+        await removeData(key);
+      }
+    } catch (err) {
+      console.error('Error clearing playlist track caches:', err);
+    }
+  };
+
+  /**
+   * Get cache statistics
+   * @returns {Promise<{totalSize: number, entryCount: number, byType: Object}>}
+   */
+  const getCacheStatistics = useCallback(async () => {
+    try {
+      return await getCacheStats();
+    } catch (err) {
+      console.error('Error getting cache stats:', err);
+      return { totalSize: 0, entryCount: 0, byType: {} };
+    }
+  }, []);
+
+  /**
+   * Clear all non-protected cache entries
+   * @returns {Promise<number>} Number of entries cleared
+   */
+  const clearCache = useCallback(async () => {
+    try {
+      const cleared = await clearNonProtectedCache(CACHE_CONFIG.PROTECTED_KEYS);
+      // Refetch library data after clearing cache
+      await loadLibrary(true);
+      return cleared;
+    } catch (err) {
+      console.error('Error clearing cache:', err);
+      return 0;
+    }
+  }, [loadLibrary]);
 
   /**
    * Search library
@@ -209,6 +275,8 @@ export const LibraryProvider = ({ children }) => {
     refreshAlbums,
     refreshArtists,
     refreshPlaylists,
+    getCacheStatistics,
+    clearCache,
   };
 
   return (

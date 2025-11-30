@@ -8,9 +8,23 @@ export const API_KEY = 'YOUR_API_KEY_HERE'; // TODO: Replace with actual X-API-K
 
 // Cache Configuration
 export const CACHE_TTL = {
-  LIBRARY: 5 * 60 * 1000, // 5 minutes
+  LIBRARY: 10 * 60 * 1000, // 10 minutes
   ARTWORK: 7 * 24 * 60 * 60 * 1000, // 7 days
   SEARCH: 2 * 60 * 1000, // 2 minutes
+  PLAYLIST_TRACKS: 5 * 60 * 1000, // 5 minutes for individual playlist tracks
+};
+
+// Cache Management Configuration (for data caching only, not audio files)
+export const CACHE_CONFIG = {
+  MAX_CACHE_SIZE_MB: 50, // 50MB limit for data caching
+  PROTECTED_KEYS: [
+    '@music_app/library_cache',
+    '@music_app/favorites',
+    '@music_app/queue',
+    '@music_app/queue_index',
+    '@music_app/user_settings',
+    '@music_app/recently_played',
+  ], // Keys that should never be evicted
 };
 
 // Storage Keys
@@ -22,15 +36,7 @@ export const STORAGE_KEYS = {
   PLAYBACK_POSITION: '@music_app/playback_position',
   USER_SETTINGS: '@music_app/user_settings',
   LIBRARY_CACHE: '@music_app/library_cache',
-  LIBRARY_CACHE_TIME: '@music_app/library_cache_time',
-};
-
-// Cache Keys
-export const CACHE_KEYS = {
-  LIBRARY: '@music_app/cache_library',
-  PLAYLISTS: '@music_app/cache_playlists',
-  ALBUMS: '@music_app/cache_albums',
-  ARTISTS: '@music_app/cache_artists',
+  PLAYLIST_TRACKS_PREFIX: '@music_app/playlist_tracks_', // Prefix for individual playlist caches
 };
 
 // Player Configuration

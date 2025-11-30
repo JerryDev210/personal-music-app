@@ -1,5 +1,6 @@
 import api from './api';
-import { API_ENDPOINTS } from '../config/constants';
+import { API_ENDPOINTS, STORAGE_KEYS, CACHE_TTL } from '../config/constants';
+import { getCachedData } from './cache';
 
 /**
  * @typedef {import('../types/models').Playlist} Playlist
@@ -57,12 +58,41 @@ export const fetchPlaylistById = async (playlistId) => {
 /**
  * Fetch tracks in a playlist
  * @param {number} playlistId - Playlist ID
- * @returns {Promise<PlaylistTrack[]>}
+ * @returns {Promise<Track[]>}
  */
 export const fetchPlaylistTracks = async (playlistId) => {
   try {
-    const response = await api.get(`${API_ENDPOINTS.PLAYLISTS}/${playlistId}/tracks`);
-    return response.data;
+    const response = await api.get(`${API_ENDPOINTS.PLAYLISTS}/${playlistId}`);
+    
+    // Get playlist tracks with id field
+    const playlistTracks = response.data.tracks?.map(track => ({
+      ...track,
+      id: track.id // API now uses id consistently
+    })) || [];
+
+    // Get main library cache for track metadata
+    const libraryCache = await getCachedData(STORAGE_KEYS.LIBRARY_CACHE, CACHE_TTL.LIBRARY);
+    if (libraryCache?.tracks) {
+      const enrichedTracks = [];
+      
+      for (const playlistTrack of playlistTracks) {
+        const libraryTrack = libraryCache.tracks.find(lt => lt.id === playlistTrack.id);
+        
+        if (libraryTrack) {
+          // Merge library metadata with playlist-specific data
+          enrichedTracks.push({
+            ...libraryTrack,
+            ...playlistTrack
+          });
+        } else {
+          console.warn(`Track ${playlistTrack.id} not found in library cache, skipping`);
+        }
+      }
+      
+      return enrichedTracks;
+    }
+
+    return playlistTracks;
   } catch (error) {
     console.error(`Error fetching tracks for playlist ${playlistId}:`, error);
     throw error;

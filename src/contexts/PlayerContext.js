@@ -112,12 +112,8 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [queue, queueIndex, position]);
 
-  // Auto-save state when it changes
-  useEffect(() => {
-    if (queue.length > 0) {
-      saveState();
-    }
-  }, [queue, queueIndex, saveState]);
+  // Save state manually in operations to avoid race conditions
+  // Removed auto-save effect that was causing stale index issues
 
   /**
    * Start progress tracking
@@ -329,15 +325,54 @@ export const PlayerProvider = ({ children }) => {
    * @param {number} [startIndex=0] - Index to start from
    */
   const setQueueAndPlay = async (tracks, startIndex = 0) => {
+    // Stop current playback and clear progress tracking
+    stopProgressTracking();
+    if (player && isPlaying) {
+      try {
+        player.pause();
+        setIsPlaying(false);
+      } catch (error) {
+        console.error('Error pausing during queue change:', error);
+      }
+    }
+    
+    // Create new queue
     const { queue: newQueue, startIndex: newStartIndex } = createQueue(
       tracks,
       startIndex,
       shuffleEnabled
     );
     
+    // Validate queue
+    if (!newQueue || newQueue.length === 0 || newStartIndex >= newQueue.length) {
+      console.error('Invalid queue or start index');
+      return;
+    }
+    
+    // Set new queue state - batch updates to avoid race conditions
     setQueue(newQueue);
     setQueueIndex(newStartIndex);
-    await playTrackAtIndex(newStartIndex);
+    setPosition(0);
+    
+    // Save state after all updates are set
+    // Use setTimeout to ensure React has processed state updates
+    setTimeout(async () => {
+      try {
+        await Promise.all([
+          storeData(STORAGE_KEYS.QUEUE, newQueue),
+          storeData(STORAGE_KEYS.QUEUE_INDEX, newStartIndex),
+          storeData(STORAGE_KEYS.PLAYBACK_POSITION, 0),
+        ]);
+      } catch (error) {
+        console.error('Error saving queue state:', error);
+      }
+    }, 0);
+    
+    // Load and play the track directly from the new queue (don't wait for state update)
+    const trackToPlay = newQueue[newStartIndex];
+    if (trackToPlay) {
+      await loadTrack(trackToPlay);
+    }
   };
 
   /**

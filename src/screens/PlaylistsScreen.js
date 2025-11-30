@@ -11,17 +11,10 @@ import {
   Alert,
   Image,
 } from 'react-native';
-import { fetchPlaylists, createPlaylist } from '../services/playlists';
-import { storeCachedData, getCachedData, removeData } from '../services/cache';
-import { CACHE_KEYS, CACHE_TTL } from '../config/constants';
-import { formatRelativeTime } from '../utils/formatters';
+import { createPlaylist } from '../services/playlists';
 import { useLibrary } from '../hooks';
 
 export default function PlaylistsScreen({ navigation }) {
-  const [playlists, setPlaylists] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -32,11 +25,10 @@ export default function PlaylistsScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
   
-  const { tracks } = useLibrary();
+  // Use LibraryContext for playlists and tracks
+  const { playlists, tracks, loading, error, refreshPlaylists } = useLibrary();
 
   useEffect(() => {
-    loadPlaylists();
-    
     // Set header right button
     navigation.setOptions({
       headerRight: () => (
@@ -49,45 +41,6 @@ export default function PlaylistsScreen({ navigation }) {
       ),
     });
   }, []);
-
-  const loadPlaylists = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Try to load from cache first
-      const cached = await getCachedData(CACHE_KEYS.PLAYLISTS, CACHE_TTL.LIBRARY);
-      if (cached) {
-        setPlaylists(cached);
-        setLoading(false);
-        // Fetch fresh data in background
-        fetchFreshPlaylists();
-        return;
-      }
-
-      // No cache, fetch from server
-      await fetchFreshPlaylists();
-    } catch (err) {
-      console.error('Error loading playlists:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFreshPlaylists = async () => {
-    try {
-      const data = await fetchPlaylists();
-      setPlaylists(data.playlists || []);
-      // Save to cache
-      await storeCachedData(CACHE_KEYS.PLAYLISTS, data);
-    } catch (err) {
-      console.error('Error fetching playlists:', err);
-      if (playlists.length === 0) {
-        throw err;
-      }
-    }
-  };
 
   const handleCreatePlaylist = () => {
     setModalVisible(true);
@@ -127,13 +80,10 @@ export default function PlaylistsScreen({ navigation }) {
 
     try {
       setCreating(true);
-      const newPlaylist = await createPlaylist(playlistName.trim(), selectedTrackIds);
+      await createPlaylist(playlistName.trim(), selectedTrackIds);
       
-      // Prepend new playlist to list
-      setPlaylists(prev => [newPlaylist, ...prev]);
-      
-      // Clear cache
-      await removeData(CACHE_KEYS.PLAYLISTS);
+      // Refresh playlists from LibraryContext
+      await refreshPlaylists();
       
       // Close modal and reset
       setModalVisible(false);
@@ -152,8 +102,7 @@ export default function PlaylistsScreen({ navigation }) {
   };
 
   const handlePlaylistPress = (playlist) => {
-    // TODO: Navigate to playlist detail screen
-    console.log('Playlist pressed:', playlist.name);
+    navigation.navigate('PlaylistDetail', { playlist });
   };
 
   const renderPlaylist = ({ item }) => (
@@ -219,7 +168,7 @@ export default function PlaylistsScreen({ navigation }) {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
-        onRefresh={loadPlaylists}
+        onRefresh={refreshPlaylists}
         numColumns={2}
       />
 

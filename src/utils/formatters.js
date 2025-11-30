@@ -16,6 +16,19 @@ export const formatDuration = (seconds) => {
   
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
+export const formatDurationString = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '0 min';
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours}hr:${minutes}min`;
+  }
+  
+  return `${minutes}min`;
+};
 
 /**
  * Format file size to human-readable format

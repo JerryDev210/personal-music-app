@@ -20,7 +20,7 @@ import IconEnd from '../../assets/icons/end.png';
  * Mini Player Component
  * Shows current track and basic controls at bottom of screen
  */
-export default function MiniPlayer() {
+export default function MiniPlayer({ navigation }) {
   const insets = useSafeAreaInsets();
   
   const {
@@ -63,6 +63,12 @@ export default function MiniPlayer() {
     }
   };
 
+  const handleMiniPlayerPress = () => {
+    if (navigation) {
+      navigation.navigate('Player');
+    }
+  };
+
   return (
     <View style={[styles.container, { 
       bottom: (Platform.OS === 'ios' ? 80 : 60) + insets.bottom
@@ -81,51 +87,57 @@ export default function MiniPlayer() {
 
       {/* Track Info + Controls */}
       <View style={styles.trackInfo}>
-        {currentTrack.artwork_url ? (
-          <Image
-            source={{ uri: currentTrack.artwork_url }}
-            style={styles.albumArt}
-          />
-        ) : (
-          <View style={[styles.albumArt, styles.albumArtPlaceholder]}>
-            <Text style={styles.albumArtIcon}>🎵</Text>
+        <TouchableOpacity 
+          style={styles.trackInfoTouchable}
+          onPress={handleMiniPlayerPress}
+          activeOpacity={0.7}
+        >
+          {currentTrack.artwork_url ? (
+            <Image
+              source={{ uri: currentTrack.artwork_url }}
+              style={styles.albumArt}
+            />
+          ) : (
+            <View style={[styles.albumArt, styles.albumArtPlaceholder]}>
+              <Text style={styles.albumArtIcon}>🎵</Text>
+            </View>
+          )}
+          
+          <View style={styles.trackDetails}>
+            <Text style={styles.trackTitle} numberOfLines={1}>
+              {currentTrack.title}
+            </Text>
+            <Text style={styles.trackArtist} numberOfLines={1}>
+              {currentTrack.artist}
+            </Text>
           </View>
-        )}
-        
-        <View style={styles.trackDetails}>
-          <Text style={styles.trackTitle} numberOfLines={1}>
-            {currentTrack.title}
-          </Text>
-          <Text style={styles.trackArtist} numberOfLines={1}>
-            {currentTrack.artist}
-          </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Controls on the right */}
         <View style={styles.controls}>
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={previous}
-          >
-            <Image source={IconStart} style={styles.controlImage} />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.controlButton}
+          onPress={previous}
+        >
+          <Image source={IconStart} style={styles.controlImage} />
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={handlePlayPause}
-          >
-            <Image 
-              source={isPlaying ? IconPause : IconPlay} 
-              style={styles.controlImage} 
-            />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.controlButton}
+          onPress={handlePlayPause}
+        >
+          <Image 
+            source={isPlaying ? IconPause : IconPlay} 
+            style={styles.controlImage} 
+          />
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.controlButton}
-            onPress={next}
-          >
-            <Image source={IconEnd} style={styles.controlImage} />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.controlButton}
+          onPress={next}
+        >
+          <Image source={IconEnd} style={styles.controlImage} />
+        </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -157,6 +169,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 8,
+  },
+  trackInfoTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   albumArt: {
     width: 50,

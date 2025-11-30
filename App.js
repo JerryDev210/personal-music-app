@@ -11,10 +11,12 @@ import { CACHE_CONFIG } from './src/config/constants';
 import HomeScreen from './src/screens/HomeScreen';
 import PlaylistsScreen from './src/screens/PlaylistsScreen';
 import PlaylistDetailScreen from './src/screens/PlaylistDetailScreen';
+import PlayerScreen from './src/screens/PlayerScreen';
 import MiniPlayer from './src/screens/MiniPlayer';
 
 const Tab = createBottomTabNavigator();
 const PlaylistStack = createStackNavigator();
+const RootStack = createStackNavigator();
 
 // Playlist Stack Navigator
 function PlaylistStackScreen() {
@@ -44,55 +46,82 @@ function PlaylistStackScreen() {
   );
 }
 
-function AppNavigator() {
+// Main Tab Navigator
+function MainTabs({ navigation }) {
   const insets = useSafeAreaInsets();
 
   return (
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#121212',
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          tabBarStyle: {
+            backgroundColor: '#181818',
+            borderTopColor: '#282828',
+            paddingBottom: Platform.OS === 'ios' ? 0 : Math.max(8, insets.bottom),
+            paddingTop: 8,
+            height: Platform.OS === 'ios' ? 80 : 60 + insets.bottom,
+          },
+          tabBarActiveTintColor: '#1DB954',
+          tabBarInactiveTintColor: '#b3b3b3',
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
+        }}
+      >
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+          }}
+        />
+        <Tab.Screen
+          name="Playlists"
+          component={PlaylistStackScreen}
+          options={{
+            tabBarIcon: ({ color }) => <PlaylistIcon color={color} />,
+            headerShown: false
+          }}
+        />
+      </Tab.Navigator>
+      <MiniPlayer navigation={navigation} />
+    </View>
+  );
+}
+
+function AppNavigator() {
+  return (
     <NavigationContainer>
       <StatusBar style="light" />
-      <View style={{ flex: 1 }}>
-        <Tab.Navigator
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: '#121212',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            tabBarStyle: {
-              backgroundColor: '#181818',
-              borderTopColor: '#282828',
-              paddingBottom: Platform.OS === 'ios' ? 0 : Math.max(8, insets.bottom),
-              paddingTop: 8,
-              height: Platform.OS === 'ios' ? 80 : 60 + insets.bottom,
-            },
-                    tabBarActiveTintColor: '#1DB954',
-                    tabBarInactiveTintColor: '#b3b3b3',
-                    tabBarLabelStyle: {
-                      fontSize: 12,
-                      fontWeight: '600',
-                    },
-                  }}
-                >
-                <Tab.Screen
-                  name="Home"
-                  component={HomeScreen}
-                  options={{
-                    tabBarIcon: ({ color }) => <HomeIcon color={color} />,
-                  }}
-                />
-                <Tab.Screen
-                  name="Playlists"
-                  component={PlaylistStackScreen}
-                  options={{
-                    tabBarIcon: ({ color }) => <PlaylistIcon color={color} />,
-                    headerShown: false
-                  }}
-                />
-        </Tab.Navigator>
-        <MiniPlayer/>
-      </View>
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          presentation: 'modal',
+          animationEnabled: true,
+        }}
+      >
+        <RootStack.Screen 
+          name="Main" 
+          component={MainTabs}
+        />
+        <RootStack.Screen 
+          name="Player" 
+          component={PlayerScreen}
+          options={{
+            headerShown: false,
+            animationEnabled: true,
+            presentation: 'modal',
+          }}
+        />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
